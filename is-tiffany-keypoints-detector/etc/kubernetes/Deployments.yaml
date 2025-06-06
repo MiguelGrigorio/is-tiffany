@@ -1,0 +1,122 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: is-tiffany-keypoints-detector-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: is-tiffany-keypoints-detector
+      instance: "1"
+  template:
+    metadata:
+      labels:
+        app: is-tiffany-keypoints-detector
+        instance: "1"
+    spec:
+      containers:
+      - name: is-tiffany-orientation-detector-1
+        image: miguelgrigorio27/is-tiffany-keypoints-detector-cpu
+        command: ["python", "src/main.py"]
+        imagePullPolicy: Always
+        env:
+          - name: CAMERA_ID
+            value: "1"
+          - name: CONFIG
+            valueFrom:
+              configMapKeyRef:
+                name: is-tiffany-keypoints-detector-config
+                key: config
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: is-tiffany-keypoints-detector-2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: is-tiffany-keypoints-detector
+      instance: "2"
+  template:
+    metadata:
+      labels:
+        app: is-tiffany-keypoints-detector
+        instance: "2"
+    spec:
+      containers:
+      - name: is-tiffany-orientation-detector-2
+        image: miguelgrigorio27/is-tiffany-keypoints-detector-cpu
+        command: ["python", "src/main.py"]
+        imagePullPolicy: Always
+        env:
+          - name: CAMERA_ID
+            value: "2"
+          - name: CONFIG
+            valueFrom:
+              configMapKeyRef:
+                name: is-tiffany-keypoints-detector-config
+                key: config
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: is-tiffany-keypoints-detector-3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: is-tiffany-keypoints-detector
+      instance: "3"
+  template:
+    metadata:
+      labels:
+        app: is-tiffany-keypoints-detector
+        instance: "3"
+    spec:
+      containers:
+      - name: is-tiffany-orientation-detector-3
+        image: miguelgrigorio27/is-tiffany-keypoints-detector-cpu
+        command: ["python", "src/main.py"]
+        imagePullPolicy: Always
+        env:
+          - name: CAMERA_ID
+            value: "3"
+          - name: CONFIG
+            valueFrom:
+              configMapKeyRef:
+                name: is-tiffany-keypoints-detector-config
+                key: config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: is-tiffany-keypoints-detector-4
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: is-tiffany-keypoints-detector
+      instance: "4"
+  template:
+    metadata:
+      labels:
+        app: is-tiffany-keypoints-detector
+        instance: "4"
+    spec:
+      containers:
+      - name: is-tiffany-orientation-detector-4
+        image: miguelgrigorio27/is-tiffany-keypoints-detector-cpu
+        command: ["python", "src/main.py"]
+        imagePullPolicy: Always
+        env:
+          - name: CAMERA_ID
+            value: "4"
+          - name: CONFIG
+            valueFrom:
+              configMapKeyRef:
+                name: is-tiffany-keypoints-detector-config
+                key: config
+
