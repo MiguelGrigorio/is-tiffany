@@ -21,7 +21,7 @@ def download_model(download_link: str, log: Logger) -> None:
     import requests
 
     model_path = Path("models/best.pt")
-    model_path.parent.mkdir(parents=True, exist_ok=True)  # Cria o diretório se não existir
+    model_path.parent.mkdir(parents = True, exist_ok = True)  # Cria o diretório se não existir
     # Verifica se o modelo já existe
     if not model_path.exists():
         log.info(f"Downloading model from {download_link} to {model_path}")
@@ -103,7 +103,7 @@ def main() -> None:
                 cv2.circle(original, (int(obj.objects[0].keypoints[0].position.x), int(obj.objects[0].keypoints[0].position.y)), 2, (255, 0, 0), -1)
                 cv2.circle(original, (int(obj.objects[0].keypoints[1].position.x), int(obj.objects[0].keypoints[1].position.y)), 2, (0, 0, 255), -1)
                 image_msg = Message()
-                image_msg.topic = f'TiffanyKeypoints.{camera_id}.Frame'
+                image_msg.topic = f'TiffanyKeypoints.{camera_id}.Rendered'
                 image_msg.inject_tracing(span)
                 image = to_image(original)
                 image_msg.pack(image)
