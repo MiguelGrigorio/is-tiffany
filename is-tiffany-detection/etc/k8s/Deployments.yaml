@@ -1,0 +1,92 @@
+# 1. Solicitação de Volume Persistente para compartilhar o modelo
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tiffany-model-storage-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 200Mi
+
+---
+# 2. Serviço Headless (necessário para o StatefulSet)
+apiVersion: v1
+kind: Service
+metadata:
+  name: is-tiffany-detection-svc
+spec:
+  clusterIP: None
+  selector:
+    app: is-tiffany-detection
+
+---
+# 3. StatefulSet para gerenciar os pods das câmeras
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: is-tiffany-detection
+spec:
+  serviceName: "is-tiffany-detection-svc"
+  replicas: 4
+  selector:
+    matchLabels:
+      app: is-tiffany-detection
+  template:
+    metadata:
+      labels:
+        app: is-tiffany-detection
+    spec:
+      volumes:
+        - name: model-storage
+          persistentVolumeClaim:
+            claimName: tiffany-model-storage-pvc
+        - name: config-volume
+          configMap:
+            name: is-tiffany-detection-config
+
+      # --- initContainer agora baixa o link raw do modelo ---
+      initContainers:
+      - name: model-downloader
+        image: alpine:latest # Imagem leve com 'wget'
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            set -e
+            echo "Baixando o modelo diretamente do link raw...";
+            wget -O /models/detection_model.pt "https://github.com/MiguelGrigorio/is-tiffany/raw/refs/heads/main/is-tiffany-detection/src/models/detection_model.pt"
+            echo "Download do modelo concluído.";
+        volumeMounts:
+        - name: model-storage
+          mountPath: /models
+
+      containers:
+      - name: is-tiffany-detection-container
+        image: miguelgrigorio27/is-tiffany-detection:latest
+        command: ["python", "main.py"]
+        imagePullPolicy: Always
+        
+        env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: CONFIG
+            valueFrom:
+              configMapKeyRef:
+                name: is-tiffany-keypoints-detector-config
+                key: config
+
+        resources:
+          limits:
+            aliyun.com/gpu-mem: 0.5
+            
+        volumeMounts:
+        - name: model-storage
+          mountPath: /models
+          readOnly: true
+        - name: config-volume
+          mountPath: /config
+          readOnly: true
+          
