@@ -17,6 +17,21 @@ def load_config():
     except json.JSONDecodeError:
         return {}
 
+def download_model(model_url: str, model_path: str) -> None:
+    import requests
+    from pathlib import Path
+
+    # Cria o diretório se não existir
+    Path(model_path).parent.mkdir(parents=True, exist_ok=True)
+
+    # Faz o download do modelo
+    response = requests.get(model_url)
+    if response.status_code == 200:
+        with open(model_path, 'wb') as f:
+            f.write(response.content)
+        print(f"Modelo baixado com sucesso: {model_path}")
+    else:
+        print(f"Erro ao baixar o modelo: {response.status_code}")
 
 def main() -> None:
     config = load_config()
@@ -24,14 +39,12 @@ def main() -> None:
     # Configurações padrão podem vir do ConfigMap
     broker_uri = config.get("broker_uri", "amqp://guest:guest@10.10.2.211:30000")
     zipkin_uri = config.get("zipkin_uri", "http://10.10.2.211:30200")
+    model_url = config.get("model_url", "https://github.com/MiguelGrigorio/is-tiffany/raw/refs/heads/main/is-tiffany-detection/src/models/detection_model.pt")
 
-    pod_name = os.getenv('POD_NAME', 'is-tiffany-detection-fallback-0')
-    match = re.search(r'(\d+)$', pod_name)
-    if match:
-        camera_id = int(match.group(1)) + 1
-    else:
-        camera_id = 1
-        
+    download_model(model_url, "models/detection_model.pt")
+    
+    camera_id = int(os.getenv("CAMERA_ID", 1))
+
     service_name = f"Tiffany.{camera_id}.Detection"
     
     log = Logger(name = service_name)
