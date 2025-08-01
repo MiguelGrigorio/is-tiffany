@@ -20,19 +20,17 @@ def get_images_from_camera(channel_camera: StreamChannel, exporter: ZipkinExport
             - tracer (Tracer): Objeto Tracer para monitoramento distribuído.
             - span (BlankSpan): Span de trace ativo para a operação.
     '''
-
     while True:
-        while True:
-            image = channel_camera.consume(0.0)
-            
-            if not isinstance(image, bool):
-                tracer: Tracer = Tracer(
-                    exporter = exporter, 
-                    span_context = image.extract_tracing()
-                    )
-                span: BlankSpan = tracer.start_span(name = "tiffany_detection")
+        image = channel_camera.consume_last()
+        
+        if not isinstance(image, bool):
+            tracer: Tracer = Tracer(
+                exporter = exporter, 
+                span_context = image.extract_tracing()
+                )
+            span: BlankSpan = tracer.start_span(name = "tiffany_detection")
 
-                with tracer.span(name = "get_and_unpack_image_from_camera"):
-                    img = image.unpack(Image)
-                    img_np = to_np(img)
-                    return img_np, tracer, span
+            with tracer.span(name = "get_and_unpack_image_from_camera"):
+                img = image.unpack(Image)
+                img_np = to_np(img)
+                return img_np, tracer, span

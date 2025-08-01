@@ -5,7 +5,6 @@ from functions import get_images_from_camera
 from is_wire.core import Logger
 import time
 import os
-import re
 
 
 def load_config():
@@ -29,9 +28,10 @@ def download_model(model_url: str, model_path: str) -> None:
     if response.status_code == 200:
         with open(model_path, 'wb') as f:
             f.write(response.content)
-        print(f"Modelo baixado com sucesso: {model_path}")
+        print(f"Downloaded: {model_path}")
     else:
-        print(f"Erro ao baixar o modelo: {response.status_code}")
+        print(f"Error downloading model: {response.status_code}, retrying...")
+        download_model(model_url, model_path)
 
 def main() -> None:
     config = load_config()
@@ -40,14 +40,15 @@ def main() -> None:
     broker_uri = config.get("broker_uri", "amqp://guest:guest@10.10.2.211:30000")
     zipkin_uri = config.get("zipkin_uri", "http://10.10.2.211:30200")
     model_url = config.get("model_url", "https://github.com/MiguelGrigorio/is-tiffany/raw/refs/heads/main/is-tiffany-detection/src/models/detection_model.pt")
-
-    download_model(model_url, "models/detection_model.pt")
     
     camera_id = int(os.getenv("CAMERA_ID", 1))
 
     service_name = f"Tiffany.{camera_id}.Detection"
     
     log = Logger(name = service_name)
+
+    log.info("Verifying model...")
+    download_model(model_url, "models/detection_model.pt")
 
     c = Connection(broker_uri, zipkin_uri, camera_id, service_name, log)
     channel_camera = c.channel_camera
@@ -66,8 +67,10 @@ def main() -> None:
             continue
         except IndexError:
             continue
-        except OSError:
-            log.warn("Resetting server...")
+        except OSError as e:
+            print(f"Error: {e}")
+            log.warn(f"Resetting server...")
+            time.sleep(5)
             c = Connection(broker_uri, zipkin_uri, camera_id, service_name, log)
             channel_camera = c.channel_camera
             exporter = c.exporter
@@ -91,9 +94,9 @@ def main() -> None:
                 predict_msg.pack(obj)
                 predict_msg.created_at = time.time()
                 channel_camera.publish(predict_msg)
-                log.info(f"Tiffany detectada na câmera {camera_id} com confiança {result_dict['boxes'][0]['conf']:.2f}.")
+                log.info(f"Tiffany detected {camera_id} with confidence {result_dict['boxes'][0]['conf']:.2f}.")
             else:
-                log.info(f"Nenhuma detecção da Tiffany na câmera {camera_id}.")
+                log.info(f"No Tiffany detection on camera {camera_id}.")
         tracer.end_span()
 
 

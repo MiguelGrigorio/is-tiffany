@@ -32,9 +32,8 @@ class Detector():
         num_results = len(results.boxes)
         if num_results > 0:
             results_dict["boxes"].append({
-                "conf": results.boxes.conf.numpy()[0],
-                "xyxy": results.boxes.xyxy.numpy()[0],
-                
+                "conf": results.boxes.conf.cpu().numpy()[0],
+                "xyxy": results.boxes.xyxy.cpu().numpy()[0],
             })
         return results_dict
 
