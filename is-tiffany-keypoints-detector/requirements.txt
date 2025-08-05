@@ -1,6 +1,0 @@
-is-wire
-is-msgs
-numpy
-opencv-python-headless
-ultralytics
-opencensus-ext-zipkin

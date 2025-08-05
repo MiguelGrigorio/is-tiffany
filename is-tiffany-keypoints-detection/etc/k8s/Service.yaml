@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: is-tiffany-kp-detector-headless
+  namespace: default
+spec:
+  clusterIP: None
+  selector:
+    app: is-tiffany-kp-detector
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: is-tiffany-kp-detector
+  namespace: default
+spec:
+  serviceName: "is-tiffany-kp-detector-headless"
+  replicas: 4
+  selector:
+    matchLabels:
+      app: is-tiffany-kp-detector
+  template:
+    metadata:
+      labels:
+        app: is-tiffany-kp-detector
+    spec:
+#      imagePullSecrets:
+#        - name: formigas
+      containers:
+        - name: tiffany-container
+          image: miguelgrigorio27/is-tiffany-keypoints-detection:latest
+          imagePullPolicy: Always
+          command: ["/bin/sh", "-c"]
+          args:
+            - >
+              ORDINAL_ID=$(echo $HOSTNAME | rev | cut -d'-' -f1 | rev);
+              export CAMERA_ID=$((ORDINAL_ID + 1));
+              python main.py
+          env:
+            - name: CONFIG
+              valueFrom:
+                configMapKeyRef:
+                  name: is-tiffany-kp-detector-cm
+                  key: config
+          volumeMounts:
+            - name: models
+              mountPath: /models
+      volumes:
+        - name: models
+          emptyDir: {}

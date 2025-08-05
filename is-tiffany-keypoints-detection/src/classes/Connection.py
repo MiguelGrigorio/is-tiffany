@@ -5,11 +5,11 @@ import re
 
 class Connection:
     def __init__(self, broker_uri: str, zipkin_uri: str, camera_id: int, service_name: str, log: Logger) -> None:
-        self.channel_detection = StreamChannel(broker_uri)
         self.channel_camera = StreamChannel(broker_uri)
-
-        Subscription(self.channel_detection).subscribe(f"tiffanyDetector.{camera_id}.Detection")
+        self.channel_detection = StreamChannel(broker_uri)
+        
         Subscription(self.channel_camera).subscribe(f"CameraGateway.{camera_id}.Frame")
+        Subscription(self.channel_detection).subscribe(f"Tiffany.{camera_id}.Detection")
         log.info(f"Connected to broker: {broker_uri} for camera ID: {camera_id}")
         
         self.exporter = self.create_exporter(service_name, zipkin_uri, log)

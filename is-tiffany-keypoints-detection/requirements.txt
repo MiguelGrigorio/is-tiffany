@@ -1,0 +1,8 @@
+numpy
+opencv-python-headless
+ultralytics
+six==1.16.0
+is-wire==1.2.1
+is-msgs==1.1.18
+opencensus==0.5.0
+opencensus-ext-zipkin==0.2.1
