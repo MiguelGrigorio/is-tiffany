@@ -40,7 +40,7 @@ class Detector():
     @staticmethod
     def dict_to_obj_annot(result_dict: Dict[str, Any]) -> ObjectAnnotation:
         '''
-        Converte um dicionário contendo bounding box e keypoints no formato Tiffany
+        Converte um dicionário contendo bounding box no formato Tiffany
         para um objeto `ObjectAnnotation` do protocolo IS.
 
         Parâmetros:

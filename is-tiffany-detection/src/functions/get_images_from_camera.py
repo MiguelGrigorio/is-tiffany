@@ -12,8 +12,8 @@ def get_images_from_camera(channel_camera: StreamChannel, exporter: ZipkinExport
     Obtém a imagem recortada (ROI) da detecção da câmera.
 
     Parâmetros:
-        channel_camera (Dict[int, StreamChannel]): Dicionário de canais de stream indexados por ID da câmera.
-        exporter (Dict[int, ZipkinExporter]): Dicionário de exportadores Zipkin por ID da câmera.
+        channel_camera (StreamChannel): Canal de stream da câmera.
+        exporter (ZipkinExporter): Exportador Zipkin para rastreamento.
     Retorna:
         Tuple contendo:
             - img_np (np.ndarray): Imagem completa da câmera.

@@ -1,10 +1,2 @@
-Dockerfile
-docker/
-k8s/
-.git/
-.gitignore
-.venv/
 **__pycache__/
-*.pyc
-etc/
 src/models/
