@@ -61,6 +61,10 @@ def main() -> None:
     while True:
         try:
             crop, tracer, span, roi_offset = get_images_from_camera(channel_camera, channel_detection, exporter, conf)
+            if crop.shape[0] * crop.shape[1] < 3500:
+                log.info(f"Small Bounding Box to Camera {camera_id}.")
+                tracer.end_span()
+                continue
         except KeyboardInterrupt:
             log.error("Closing...")
             raise(KeyboardInterrupt)
@@ -97,7 +101,7 @@ def main() -> None:
                 predict_msg.pack(obj)
                 predict_msg.created_at = time.time()
                 channel_camera.publish(predict_msg)
-                log.info(f"Keypoints detected {camera_id} with confidence {100*(result_dict['keypoints'][0]['conf'] - 0.99):.2f} and {100*(result_dict['keypoints'][1]['conf'] - 0.99):.2f}.")
+                log.info(f"Keypoints detected in camera {camera_id} with confidence {100*(result_dict['keypoints'][0]['conf'] - 0.99):.2f} and {100*(result_dict['keypoints'][1]['conf'] - 0.99):.2f}.")
             else:
                 log.info(f"No keypoints detected on camera {camera_id}.")
         tracer.end_span()
