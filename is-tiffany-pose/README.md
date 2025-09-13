@@ -120,7 +120,6 @@ Apply the Kubernetes manifests in `etc/k8s`:
 kubectl apply -f etc/k8s/ConfigMap.yaml
 kubectl apply -f etc/k8s/Service.yaml
 ```
-The StatefulSet deploy 1 replica, each assigned a unique camera ID from the pod hostname ordinal index.
 
 ## Camera Calibration
 
