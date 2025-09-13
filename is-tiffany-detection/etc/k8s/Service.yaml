@@ -32,24 +32,23 @@ spec:
           imagePullPolicy: Always
           command: ["/bin/sh", "-c"]
           args:
-            - >
-              ORDINAL_ID=$(echo $HOSTNAME | rev | cut -d'-' -f1 | rev);
-              export CAMERA_ID=$((ORDINAL_ID + 1));
-              python main.py
+          - >
+            ORDINAL_ID=$(echo $HOSTNAME | rev | cut -d'-' -f1 | rev);
+            export CAMERA_ID=$((ORDINAL_ID + 1));
+            python main.py
           env:
-            - name: NVIDIA_VISIBLE_DEVICES
-              value: all
-            - name: CONFIG
-              valueFrom:
-                configMapKeyRef:
-                  name: is-tiffany-detector-cm
-                  key: config
+          - name: NVIDIA_VISIBLE_DEVICES
+            value: all
+          - name: BROKER_URI
+            valueFrom:
+              configMapKeyRef:
+                name: is-tiffany-detector-cm
+                key: broker_uri
+          - name: ZIPKIN_URI
+            valueFrom:
+              configMapKeyRef:
+                name: is-tiffany-detector-cm
+                key: zipkin_uri
           resources:
             limits:
               aliyun.com/gpu-mem: "1"
-          volumeMounts:
-            - name: models
-              mountPath: /models
-      volumes:
-        - name: models
-          emptyDir: {}

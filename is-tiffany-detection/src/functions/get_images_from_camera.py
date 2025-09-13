@@ -1,36 +1,33 @@
 from opencensus.ext.zipkin.trace_exporter import ZipkinExporter
+from is_wire.core import Tracer, Message
+from opencensus.trace.span import Span
 from is_msgs.image_pb2 import Image
-from opencensus.trace.blank_span import BlankSpan
-from typing import Tuple
-from is_wire.core import Tracer
-from .to_np import to_np
 from classes import StreamChannel
+from typing import Tuple
+from .to_np import to_np
 import numpy as np
 
-def get_images_from_camera(channel_camera: StreamChannel, exporter: ZipkinExporter) -> Tuple[np.ndarray, Tracer, BlankSpan]:
-    '''
-    Obtém a imagem recortada (ROI) da detecção da câmera.
+def get_images_from_camera(channel_camera: StreamChannel, exporter: ZipkinExporter) -> Tuple[np.ndarray, Tracer, Span]:
+    """Consumes the most recent image from a channel and prepares distributed tracing.
 
-    Parâmetros:
-        channel_camera (StreamChannel): Canal de stream da câmera.
-        exporter (ZipkinExporter): Exportador Zipkin para rastreamento.
-    Retorna:
-        Tuple contendo:
-            - img_np (np.ndarray): Imagem completa da câmera.
-            - tracer (Tracer): Objeto Tracer para monitoramento distribuído.
-            - span (BlankSpan): Span de trace ativo para a operação.
-    '''
+    Args:
+        channel_camera (StreamChannel): The channel from which the image will be consumed.
+        exporter (ZipkinExporter): The Zipkin exporter used to create the tracer.
+
+    Returns:
+        Tuple[np.ndarray, Tracer, Span]: The image as a NumPy array, the Tracer object, and the Span.
+    """
     while True:
-        image = channel_camera.consume_last()
-        
-        if not isinstance(image, bool):
-            tracer: Tracer = Tracer(
-                exporter = exporter, 
-                span_context = image.extract_tracing()
-                )
-            span: BlankSpan = tracer.start_span(name = "tiffany_detection")
+        message: Message = channel_camera.consume_last()
+        if not isinstance(message, bool):
+            continue
+        tracer: Tracer = Tracer(
+            exporter=exporter,
+            span_context=message.extract_tracing()
+        )
+        span: Span = tracer.start_span(name="tiffany_detection")
 
-            with tracer.span(name = "get_and_unpack_image_from_camera"):
-                img = image.unpack(Image)
-                img_np = to_np(img)
-                return img_np, tracer, span
+        with tracer.span(name="get_and_unpack_image_from_camera"):
+            image_proto = message.unpack(Image)
+            image_np = to_np(image_proto)
+            return image_np, tracer, span

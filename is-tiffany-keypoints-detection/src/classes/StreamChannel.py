@@ -1,37 +1,46 @@
-import socket
 from is_wire.core import Channel
 from is_wire.core import Message
-from typing import Tuple
+from typing import Tuple, Union
+import socket
 
 class StreamChannel(Channel):
-    """
-    Classe especializada para consumir apenas a última mensagem disponível de um canal IS.
-    
-    Herda de `is_wire.core.Channel` e sobrescreve o método `consume_last` para descartar
-    mensagens antigas, retornando somente a mais recente.
+    """Specialized class to consume only the latest message from a channel.
+
+    Inherits from `is_wire.core.Channel` and adds the `consume_last` method to
+    discard queued messages, returning only the most recent one. Ideal for
+    real-time applications like video streaming, where processing outdated data
+    is undesirable.
     """
 
     def __init__(self, uri: str = "amqp://guest:guest@10.10.2.211:30000", exchange: str = "is"):
-        """
-        Inicializa o canal com URI e exchange padrão.
+        """Initializes the streaming channel.
 
-        Parâmetros:
-            uri (str): URI do servidor AMQP.
-            exchange (str): Nome da exchange a ser usada.
+        Args:
+            uri (str): URI of the AMQP server (broker).
+            exchange (str): Name of the exchange to be used.
         """
         super().__init__(uri=uri, exchange=exchange)
 
-    def consume_last(self, return_dropped: bool = False) -> Tuple[Message, int]:
-        """
-        Consome apenas a última mensagem disponível no canal, descartando as anteriores.
+    def consume_last(self, return_dropped: bool = False) -> Union[Message, Tuple[Message, int]]:
+        """Consumes the latest available message from the channel, discarding previous ones.
 
-        Parâmetros:
-            return_dropped (bool): Se True, retorna também o número de mensagens descartadas.
+        This method first waits for a message and then quickly consumes
+        all subsequent messages already in the buffer, ensuring the returned
+        message is the most recent.
 
-        Retorna:
-            - Message: a última mensagem disponível.
-            - (Message, int): se `return_dropped` for True, inclui o número de mensagens descartadas.
-            - False: se nenhum dado estiver disponível no momento.
+        Args:
+            return_dropped (bool): If True, also returns the number of messages
+                                that were dropped. Defaults to False.
+
+        Returns:
+            msg (Message | Tuple[Message, int]]): The latest available message.
+                                                    If `return_dropped` is True, 
+                                                    returns a tuple containing the
+                                                    message and the number of dropped messages.
+
+        Raises:
+            socket.timeout: If no message is received within the timeout period
+                            of the initial consume call.
         """
         dropped = 0
         msg = super().consume()

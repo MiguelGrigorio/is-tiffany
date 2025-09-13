@@ -37,14 +37,18 @@ spec:
               export CAMERA_ID=$((ORDINAL_ID + 1));
               python main.py
           env:
-            - name: CONFIG
-              valueFrom:
-                configMapKeyRef:
-                  name: is-tiffany-kp-detector-cm
-                  key: config
-          volumeMounts:
-            - name: models
-              mountPath: /models
-      volumes:
-        - name: models
-          emptyDir: {}
+          - name: BROKER_URI
+            valueFrom:
+              configMapKeyRef:
+                name: is-tiffany-kp-detector-cm
+                key: broker_uri
+          - name: ZIPKIN_URI
+            valueFrom:
+              configMapKeyRef:
+                name: is-tiffany-kp-detector-cm
+                key: zipkin_uri
+          - name: CONF
+            valueFrom:
+              configMapKeyRef:
+                name: is-tiffany-kp-detector-cm
+                key: conf
