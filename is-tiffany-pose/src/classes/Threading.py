@@ -1,18 +1,14 @@
-from .Connection import Connection
-from .AngleHistory import AngleHistory
-from is_msgs.image_pb2 import ObjectAnnotations, Resolution
+from is_wire.core import Message, StatusCode, Status, Subscription, Channel
 from is_msgs.common_pb2 import Pose, Position, Orientation
+from google.protobuf.wrappers_pb2 import FloatValue
+from is_msgs.image_pb2 import ObjectAnnotations
+from functions import point2world, angle
+from .AngleHistory import AngleHistory
+from .Connection import Connection
+import numpy as np
 import threading
 import time
-import cv2
-from is_wire.core import Logger, Message, StatusCode, Status, Subscription, Channel
-import numpy as np
-from amqp.exceptions import UnexpectedFrame
-from google.protobuf.wrappers_pb2 import FloatValue
-from opencensus.trace.blank_span import BlankSpan
-from opencensus.trace.span import Span
 import os
-from functions import point2world, angle
 
 CONFIDENCE = os.environ.get("conf", 0.997)
 
@@ -198,7 +194,7 @@ class Threading:
             request = Message(content=FloatValue(value=minutes.value + 1), reply_to=subscription)
             try:
                 channel.publish(request, topic=f"Tiffany.Keypoints.{cam_id}.StartDetection")
-                reply = channel.consume(timeout=3.0)
+                reply = channel.consume(timeout=5.0)
                 time.sleep(0.5)
                 if reply.status.code in [StatusCode.OK, StatusCode.ALREADY_EXISTS]:
                     if not self.keypoints_event[cam_id].is_set():

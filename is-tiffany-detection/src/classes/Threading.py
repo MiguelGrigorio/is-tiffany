@@ -63,21 +63,23 @@ class Threading:
         duration_seconds = minutes.value * 60
         start_time = time.time()
         self.log.info(f"Detection started. Duration: {duration_seconds / 60:.2f} minutes.")
-
-        while time.time() - start_time < duration_seconds:
+        end_time = start_time + duration_seconds
+        while time.time() < end_time:
             try:
-                img, tracer, span = get_images_from_camera(channel_camera, exporter)
+                img, tracer, span = get_images_from_camera(channel_camera, exporter, end_time)
             except KeyboardInterrupt:
                 self.log.error("Shutting down...")
                 raise
-            except (ConnectionResetError, IndexError, UnexpectedFrame):
-                self.log.warn("Skipping frame due to temporary issue.")
+            except (ConnectionResetError, IndexError, UnexpectedFrame, TypeError):
+                #self.log.warn("Skipping frame due to temporary issue.")
                 continue
             except OSError:
                 self.log.warn("Resetting server connection due to OSError...")
                 time.sleep(2.5)
                 channel_camera = StreamChannel(self.connection.broker_uri)
                 Subscription(channel_camera).subscribe(f"CameraGateway.{self.connection.camera_id}.Frame")
+                continue
+            except:
                 continue
 
             with tracer.span(name="predict_tiffany"):
@@ -117,7 +119,7 @@ class Threading:
             self._last_image = image
             self._last_span = span
 
-    def get_last_detection(self) -> ObjectAnnotations:
+    def get_last_detection(self, *args) -> ObjectAnnotations:
         """Safely retrieves the latest detection result.
 
         Returns:
@@ -162,8 +164,9 @@ class Threading:
         duration_seconds = minutes.value * 60
         init_time = time.time()
         self.log.info(f"Streaming started. Duration: {duration_seconds / 60:.2f} minutes.")
+        end_time = init_time + duration_seconds
 
-        while time.time() - init_time < duration_seconds:
+        while time.time() < end_time:
             det = self.get_last_detection()
             img = self.get_last_image()
             span = self.get_last_span()
@@ -194,11 +197,13 @@ class Threading:
                 msg.topic = f"Tiffany.{self.connection.camera_id}.Frame"
                 msg.pack(to_image(img_to_draw))
                 channel.publish(msg)
-            except (UnexpectedFrame, ConnectionResetError, OSError):
-                self.log.warn("Resetting publishing connection...")
+            except (ConnectionResetError):
+                continue
+            except OSError:
+                self.log.warn("Resetting server connection due to OSError...")
                 time.sleep(2.5)
-                self.connection.reset_connection()
-                time.sleep(2.5)
+                channel = StreamChannel(self.connection.broker_uri)
+                continue
             except Exception as e:
                 self.log.error(f"Unexpected error while publishing: {e}")
                 continue
@@ -220,10 +225,10 @@ class Threading:
         Returns:
             Status: `OK` if the stream started, or `ALREADY_EXISTS` if one is already running.
         """
-        if not self.stream_event.is_set():
-            if not self.detection_event.is_set():
+        if not self.detection_event.is_set():
                 self.init_detection(FloatValue(value=minutes.value + 1), ctx)
                 time.sleep(1.0)
+        if not self.stream_event.is_set():
             thread = threading.Thread(target=self.stream_detection_thread, args=(minutes,))
             thread.daemon = True
             thread.start()

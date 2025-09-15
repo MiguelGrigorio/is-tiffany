@@ -59,17 +59,17 @@ class Threading:
         threading.current_thread().name = "DetectionThread"
         start_time = time.time()
         self.log.info(f"Detection started. Duration: {duration_seconds / 60:.2f} minutes.")
-
-        while time.time() - start_time < duration_seconds:
+        end_time = start_time + duration_seconds
+        while time.time() < end_time:
             try:
-                img, tracer, span, offset, original_img = get_images_from_camera(channel_camera, self.connection)
+                img, tracer, span, offset, original_img = get_images_from_camera(channel_camera, self.connection, end_time)
 
             except KeyboardInterrupt:
                 self.log.error("Shutting down...")
                 raise KeyboardInterrupt
 
             except (ConnectionResetError, IndexError, UnexpectedFrame):
-                self.log.warn("Skipping frame due to temporary issue.")
+                #self.log.warn("Skipping frame due to temporary issue.")
                 continue
 
             except OSError:
@@ -157,7 +157,7 @@ class Threading:
         duration_seconds = minutes.value * 60
         self.log.info(f"Streaming started. Duration: {duration_seconds / 60:.2f} minutes.")
         channel = Channel(self.connection.broker_uri)
-
+        
         while time.time() - init_time < duration_seconds:
             det = self.get_last_detection()
             img = self.get_last_image()

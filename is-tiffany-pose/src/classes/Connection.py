@@ -1,6 +1,6 @@
+from is_wire.rpc import ServiceProvider, LogInterceptor, TracingInterceptor
 from opencensus.ext.zipkin.trace_exporter import ZipkinExporter
-from is_wire.core import Subscription, Logger, AsyncTransport
-from is_wire.rpc import ServiceProvider, LogInterceptor, TracerInterceptor
+from is_wire.core import Logger, AsyncTransport
 from .StreamChannel import StreamChannel
 import re
 
@@ -32,7 +32,7 @@ class Connection:
         self.log.info(f"Successfully connected to broker at {broker_uri}")
         
         self.exporter = self.create_exporter(service_name, zipkin_uri, log)
-        self.provider.add_exporter(TracerInterceptor(self.exporter))
+        self.provider.add_interceptor(TracingInterceptor(self.exporter))
         self.log.info(f"Zipkin exporter initialized for service '{service_name}' with URI: {zipkin_uri}")
 
         self.broker_uri = broker_uri

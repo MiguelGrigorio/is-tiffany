@@ -2,7 +2,7 @@ from collections import deque
 import numpy as np
 import time
 
-class SmoothedAngleHistory:
+class AngleHistory:
     """
     Maintains a history of angles and provides a smoothed output, optionally replacing outliers.
 

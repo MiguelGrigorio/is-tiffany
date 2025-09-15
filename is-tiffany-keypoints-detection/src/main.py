@@ -14,8 +14,6 @@ def main() -> None:
 
     service_name = f"Tiffany.{camera_id}.Keypoints"
 
-    log = LogInterceptor()
-
     c = Connection(broker_uri, zipkin_uri, camera_id, service_name)
     provider = c.provider
 
