@@ -68,7 +68,7 @@ class Threading:
                 self.log.error("Shutting down...")
                 raise KeyboardInterrupt
 
-            except (ConnectionResetError, IndexError, UnexpectedFrame):
+            except (ConnectionResetError, IndexError, UnexpectedFrame, TypeError):
                 #self.log.warn("Skipping frame due to temporary issue.")
                 continue
 

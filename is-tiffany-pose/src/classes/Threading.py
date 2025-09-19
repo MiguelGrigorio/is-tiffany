@@ -134,8 +134,10 @@ class Threading:
         threading.current_thread().name = "PoseThread"
         start_time = time.time()
         self.log.info(f"Starting pose calculation for {duration_seconds / 60:.2f} minutes.")
-
+        last_pose_time = 0.0
         while time.time() - start_time < duration_seconds:
+            if time.time() - last_pose_time > 5.0:
+                self.set_last_pose(Pose())
             keypoints = self.get_last_keypoints()
             if len(keypoints) < 2:
                 continue  # Need at least two cameras
@@ -159,7 +161,7 @@ class Threading:
 
             # Compute vector and angle
             vTiffany = Xw_front[:2] - Xw_center[:2]
-            angle_deg, _, _ = self.angle.add_and_check(angle(np.array([1, 0]), vTiffany), timestamp=time.time())
+            _, angle_deg, _ = self.angle.add_and_check(angle(np.array([1, 0]), vTiffany), timestamp=time.time())
 
             # Update pose
             pose = Pose(
@@ -167,6 +169,7 @@ class Threading:
                 orientation=Orientation(yaw=angle_deg)
             )
             self.set_last_pose(pose)
+            last_pose_time = time.time()
 
         self.log.info("Pose calculation finished.")
         self.set_last_pose(Pose())
